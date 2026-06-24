@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Không Tìm Thấy Trang</title>
+    
+    <!-- Tải Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Import Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%);
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .title-font {
+            font-family: 'Dancing Script', cursive;
+        }
+
+        .text-gold {
+            color: #FFD700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .glass-box {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        #flower-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen relative p-4">
+
+    <!-- Canvas cho hiệu ứng hoa rơi -->
+    <canvas id="flower-canvas"></canvas>
+
+    <main class="relative z-10 w-full max-w-2xl mx-auto text-center">
+        <div class="glass-box rounded-3xl p-10 md:p-16 transform transition duration-500 hover:border-yellow-400">
+            <!-- Số lỗi 404 -->
+            <h1 class="text-8xl md:text-9xl font-extrabold text-yellow-400 mb-2 drop-shadow-2xl tracking-widest">
+                404
+            </h1>
+            
+            <!-- Tiêu đề lỗi -->
+            <h2 class="title-font text-5xl md:text-6xl text-gold mb-6">
+                Ôi không! Lạc đường rồi...
+            </h2>
+            
+            <!-- Mô tả lỗi vui nhộn -->
+            <p class="text-lg md:text-xl text-yellow-100 opacity-90 mb-10 leading-relaxed">
+                Trang web bạn đang tìm kiếm dường như đã <br class="hidden md:block"> 
+                <strong>thu xếp hành lý về quê ăn Tết</strong> hoặc không tồn tại.
+            </p>
+            
+            <!-- Nút quay về -->
+            <a href="tet_countdown.html" class="inline-block bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 text-red-900 font-bold text-lg py-4 px-10 rounded-full transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl">
+                🏠 Về Trang Chủ Đón Tết
+            </a>
+        </div>
+    </main>
+
+    <script>
+        // ==========================================
+        // HIỆU ỨNG HOA ĐÀO/HOA MAI RƠI (CANVAS)
+        // ==========================================
+        const canvas = document.getElementById('flower-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let flowers = [];
+
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Flower {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height - height;
+                this.size = Math.random() * 4 + 3;
+                this.speedY = Math.random() * 1.5 + 0.5;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.angle = Math.random() * Math.PI * 2;
+                this.spin = Math.random() * 0.05 - 0.025;
+                
+                this.color = Math.random() > 0.3 ? '#FFD700' : '#FFB7C5';
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX + Math.sin(this.angle) * 0.5;
+                this.angle += this.spin;
+
+                if (this.y > height + this.size * 2) {
+                    this.y = -this.size * 2;
+                    this.x = Math.random() * width;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    ctx.ellipse(0, this.size, this.size / 2, this.size, 0, 0, Math.PI * 2);
+                    ctx.rotate((Math.PI * 2) / 5);
+                }
+                ctx.fill();
+                
+                ctx.fillStyle = '#FF4500';
+                ctx.beginPath();
+                ctx.arc(0, 0, this.size / 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < 50; i++) {
+            flowers.push(new Flower());
+        }
+
+        function animateFlowers() {
+            ctx.clearRect(0, 0, width, height);
+            flowers.forEach(flower => {
+                flower.update();
+                flower.draw();
+            });
+            requestAnimationFrame(animateFlowers);
+        }
+        
+        window.onload = function() {
+            animateFlowers();
+        };
+    </script>
+</body>
+</html>
