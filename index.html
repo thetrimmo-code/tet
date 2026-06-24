@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Đếm Ngược Tết Nguyên Đán</title>
+    
+    <!-- Tải Tailwind CSS để dựng giao diện nhanh -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Import Google Fonts cho font chữ lễ hội -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%); /* Nền gradient đỏ sẫm */
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .title-font {
+            font-family: 'Dancing Script', cursive;
+        }
+
+        .text-gold {
+            color: #FFD700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Hiệu ứng kính trong suốt (Glassmorphism) */
+        .glass-box {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        /* Canvas vẽ hoa rơi nằm dưới lớp UI */
+        #flower-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen relative p-4">
+
+    <!-- Canvas cho hiệu ứng hoa rơi -->
+    <canvas id="flower-canvas"></canvas>
+
+    <main class="relative z-10 w-full max-w-4xl mx-auto text-center mt-10 md:mt-0">
+        <!-- Tiêu đề chính -->
+        <div class="mb-10">
+            <h2 class="text-2xl md:text-3xl font-semibold text-yellow-300 mb-2 tracking-wide uppercase">Sắp đến Tết rồi!</h2>
+            <h1 id="tet-title" class="title-font text-6xl md:text-8xl text-gold mb-4 leading-tight">Đang tải...</h1>
+            <p id="tet-subtitle" class="text-lg md:text-xl text-yellow-100 opacity-90"></p>
+        </div>
+
+        <!-- Lời chúc mừng năm mới (Ẩn mặc định, sẽ hiện khi đến Tết đến mùng 5) -->
+        <div id="happy-new-year-msg" class="hidden text-5xl md:text-7xl text-gold font-bold py-10 title-font mb-12 drop-shadow-lg">
+            Chúc Mừng Năm Mới!
+        </div>
+
+        <!-- Khung chứa đồng hồ đếm ngược -->
+        <div id="countdown-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 mb-12">
+            <!-- Ô Ngày -->
+            <div class="glass-box rounded-2xl p-6 flex flex-col items-center justify-center transform transition duration-500 hover:scale-105 hover:border-yellow-400">
+                <span id="days" class="text-5xl md:text-7xl font-bold text-white mb-2">00</span>
+                <span class="text-sm md:text-base text-yellow-200 uppercase tracking-widest">Ngày</span>
+            </div>
+            <!-- Ô Giờ -->
+            <div class="glass-box rounded-2xl p-6 flex flex-col items-center justify-center transform transition duration-500 hover:scale-105 hover:border-yellow-400">
+                <span id="hours" class="text-5xl md:text-7xl font-bold text-white mb-2">00</span>
+                <span class="text-sm md:text-base text-yellow-200 uppercase tracking-widest">Giờ</span>
+            </div>
+            <!-- Ô Phút -->
+            <div class="glass-box rounded-2xl p-6 flex flex-col items-center justify-center transform transition duration-500 hover:scale-105 hover:border-yellow-400">
+                <span id="minutes" class="text-5xl md:text-7xl font-bold text-white mb-2">00</span>
+                <span class="text-sm md:text-base text-yellow-200 uppercase tracking-widest">Phút</span>
+            </div>
+            <!-- Ô Giây -->
+            <div class="glass-box rounded-2xl p-6 flex flex-col items-center justify-center transform transition duration-500 hover:scale-105 hover:border-yellow-400">
+                <span id="seconds" class="text-5xl md:text-7xl font-bold text-yellow-400 mb-2">00</span>
+                <span class="text-sm md:text-base text-yellow-200 uppercase tracking-widest">Giây</span>
+            </div>
+        </div>
+
+        <!-- Lời chúc -->
+        <div class="glass-box rounded-full px-8 py-4 inline-block mb-10 md:mb-0">
+            <p class="text-lg md:text-2xl text-yellow-100 font-medium">
+                🌸 Chúc mừng năm mới An Khang Thịnh Vượng 🌸
+            </p>
+        </div>
+    </main>
+
+    <footer class="relative z-10 mt-auto pb-4 text-center w-full text-yellow-200/50 text-sm">
+        <p id="tet-footer">Đếm ngược Tết Nguyên Đán</p>
+    </footer>
+
+    <script>
+        // ==========================================
+        // 1. LOGIC ĐẾM NGƯỢC TỰ ĐỘNG ĐẾN NĂM 2050
+        // ==========================================
+        
+        // Danh sách dữ liệu Tết từ 2027 đến 2050
+        const tetDates = [
+            { year: 2027, date: "2027-02-06T00:00:00", name: "Đinh Mùi" },
+            { year: 2028, date: "2028-01-26T00:00:00", name: "Mậu Thân" },
+            { year: 2029, date: "2029-02-13T00:00:00", name: "Kỷ Dậu" },
+            { year: 2030, date: "2030-02-03T00:00:00", name: "Canh Tuất" },
+            { year: 2031, date: "2031-01-23T00:00:00", name: "Tân Hợi" },
+            { year: 2032, date: "2032-02-11T00:00:00", name: "Nhâm Tý" },
+            { year: 2033, date: "2033-01-31T00:00:00", name: "Quý Sửu" },
+            { year: 2034, date: "2034-02-19T00:00:00", name: "Giáp Dần" },
+            { year: 2035, date: "2035-02-08T00:00:00", name: "Ất Mão" },
+            { year: 2036, date: "2036-01-28T00:00:00", name: "Bính Thìn" },
+            { year: 2037, date: "2037-02-15T00:00:00", name: "Đinh Tỵ" },
+            { year: 2038, date: "2038-02-04T00:00:00", name: "Mậu Ngọ" },
+            { year: 2039, date: "2039-01-24T00:00:00", name: "Kỷ Mùi" },
+            { year: 2040, date: "2040-02-12T00:00:00", name: "Canh Thân" },
+            { year: 2041, date: "2041-02-01T00:00:00", name: "Tân Dậu" },
+            { year: 2042, date: "2042-01-22T00:00:00", name: "Nhâm Tuất" },
+            { year: 2043, date: "2043-02-10T00:00:00", name: "Quý Hợi" },
+            { year: 2044, date: "2044-01-30T00:00:00", name: "Giáp Tý" },
+            { year: 2045, date: "2045-02-17T00:00:00", name: "Ất Sửu" },
+            { year: 2046, date: "2046-02-06T00:00:00", name: "Bính Dần" },
+            { year: 2047, date: "2047-01-26T00:00:00", name: "Đinh Mão" },
+            { year: 2048, date: "2048-02-14T00:00:00", name: "Mậu Thìn" },
+            { year: 2049, date: "2049-02-02T00:00:00", name: "Kỷ Tỵ" },
+            { year: 2050, date: "2050-01-23T00:00:00", name: "Canh Ngọ" }
+        ];
+
+        let targetDate = 0;
+
+        function initTetData() {
+            const now = new Date().getTime();
+            let currentTarget = tetDates[tetDates.length - 1]; // Mặc định nếu vượt quá là 2050
+            
+            // Tìm năm Tết tiếp theo
+            for (let i = 0; i < tetDates.length; i++) {
+                const tDate = new Date(tetDates[i].date).getTime();
+                // Thời gian kết thúc Tết (Sau mùng 5 - tương đương 5 ngày) để tự động chuyển sang năm sau
+                const endOfTet = tDate + (5 * 24 * 60 * 60 * 1000); 
+                
+                if (now < endOfTet) {
+                    currentTarget = tetDates[i];
+                    break;
+                }
+            }
+
+            targetDate = new Date(currentTarget.date).getTime();
+
+            // Cập nhật giao diện (Tiêu đề, ngày tháng) với thông tin của năm đó
+            document.getElementById('page-title').innerText = `Đếm Ngược Tết ${currentTarget.name} ${currentTarget.year}`;
+            document.getElementById('tet-title').innerText = `Tết ${currentTarget.name} ${currentTarget.year}`;
+            document.getElementById('tet-footer').innerText = `Đếm ngược Tết Nguyên Đán ${currentTarget.year}`;
+
+            const d = new Date(currentTarget.date);
+            const daysOfWeek = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+            const dayStr = daysOfWeek[d.getDay()];
+            const dateStr = d.getDate().toString().padStart(2, '0');
+            const monthStr = (d.getMonth() + 1).toString().padStart(2, '0');
+
+            document.getElementById('tet-subtitle').innerText = `Mùng 1 Tết rơi vào ${dayStr}, ${dateStr} Tháng ${monthStr} Năm ${currentTarget.year}`;
+        }
+
+        // Lấy các phần tử HTML để cập nhật
+        const countdownContainer = document.getElementById('countdown-container');
+        const happyNewYearMsg = document.getElementById('happy-new-year-msg');
+        const daysEl = document.getElementById('days');
+        const hoursEl = document.getElementById('hours');
+        const minutesEl = document.getElementById('minutes');
+        const secondsEl = document.getElementById('seconds');
+
+        function updateCountdown() {
+            if (targetDate === 0) initTetData();
+
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance > 0) {
+                // Đang trong quá trình đếm ngược
+                countdownContainer.style.display = 'grid';
+                happyNewYearMsg.style.display = 'none';
+
+                // Tính toán thời gian
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                // Cập nhật DOM, thêm số 0 ở đầu nếu nhỏ hơn 10
+                daysEl.innerText = days < 10 ? '0' + days : days;
+                hoursEl.innerText = hours < 10 ? '0' + hours : hours;
+                minutesEl.innerText = minutes < 10 ? '0' + minutes : minutes;
+                secondsEl.innerText = seconds < 10 ? '0' + seconds : seconds;
+            } else {
+                // Đã đến Tết (Trong vòng 5 ngày đầu năm)
+                countdownContainer.style.display = 'none';
+                happyNewYearMsg.style.display = 'block';
+                
+                // Nếu quá 5 ngày, gọi lại initTetData để tự động tìm Tết của năm tiếp theo
+                const endOfTet = targetDate + (5 * 24 * 60 * 60 * 1000);
+                if (now >= endOfTet) {
+                    initTetData();
+                }
+            }
+        }
+
+        // Khởi tạo và cập nhật mỗi giây
+        initTetData();
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        // ==========================================
+        // 2. HIỆU ỨNG HOA ĐÀO/HOA MAI RƠI (CANVAS)
+        // ==========================================
+        const canvas = document.getElementById('flower-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let flowers = [];
+
+        // Đảm bảo canvas luôn phủ kín màn hình
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Lớp mô phỏng một bông hoa rơi
+        class Flower {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height - height;
+                this.size = Math.random() * 4 + 3; // Kích thước cánh hoa
+                this.speedY = Math.random() * 1.5 + 0.5; // Tốc độ rơi
+                this.speedX = Math.random() * 1 - 0.5; // Tốc độ bay ngang do gió
+                this.angle = Math.random() * Math.PI * 2; // Góc xoay ban đầu
+                this.spin = Math.random() * 0.05 - 0.025; // Tốc độ xoay
+                
+                // Tỉ lệ 70% hoa mai vàng, 30% hoa đào hồng
+                this.color = Math.random() > 0.3 ? '#FFD700' : '#FFB7C5';
+            }
+
+            update() {
+                this.y += this.speedY;
+                // Thêm hiệu ứng lượn sóng nhẹ nhàng
+                this.x += this.speedX + Math.sin(this.angle) * 0.5;
+                this.angle += this.spin;
+
+                // Nếu rớt xuống khỏi màn hình thì cho quay lại trên cùng
+                if (this.y > height + this.size * 2) {
+                    this.y = -this.size * 2;
+                    this.x = Math.random() * width;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                
+                // Vẽ 5 cánh hoa
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    // Vẽ hình elip dẹp làm cánh hoa
+                    ctx.ellipse(0, this.size, this.size / 2, this.size, 0, 0, Math.PI * 2);
+                    ctx.rotate((Math.PI * 2) / 5);
+                }
+                ctx.fill();
+                
+                // Vẽ nhụy hoa ở giữa
+                ctx.fillStyle = '#FF4500'; // Màu đỏ cam cho nhụy
+                ctx.beginPath();
+                ctx.arc(0, 0, this.size / 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        // Tạo danh sách 60 bông hoa
+        for (let i = 0; i < 60; i++) {
+            flowers.push(new Flower());
+        }
+
+        // Vòng lặp vẽ liên tục
+        function animateFlowers() {
+            ctx.clearRect(0, 0, width, height); // Xóa khung hình cũ
+            flowers.forEach(flower => {
+                flower.update();
+                flower.draw();
+            });
+            requestAnimationFrame(animateFlowers); // Lặp lại
+        }
+        
+        // Khởi động hiệu ứng hoa rơi
+        window.onload = function() {
+            animateFlowers();
+        };
+
+    </script>
+</body>
+</html>
